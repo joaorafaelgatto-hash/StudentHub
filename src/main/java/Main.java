@@ -1,5 +1,8 @@
 import com.github.javafaker.Faker;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -26,16 +29,19 @@ public class Main {
             // limpar nossa tabela pra nao duplicar
             limparBanco(conn);
 
-             //10curso
+            // 10curso
             List<Integer> cursosIds = cadastrarCursos(conn);
 
             // geramos os 5k com o JAVAFAKER
             inserirAlunosComFaker(conn, cursosIds, 5000);
 
-            //exibe
+            // exibe resumo por curso
             exibirRelatorio(conn);
 
-        } catch (SQLException e) {
+            // exibe amostra no terminal e salva todos os 5k em arquivo
+            listarAlunosDetalhados(conn);
+
+        } catch (SQLException | IOException e) {
             System.err.println("Erro durante a execucao: " + e.getMessage());
             e.printStackTrace();
         }
@@ -120,5 +126,47 @@ public class Main {
             }
         }
         System.out.println("-----------------------------------");
+    }
+
+    // Tabela com os primeiros 50 nomes fakes e exportacao dos 5.000 para arquivo
+    private static void listarAlunosDetalhados(Connection conn) throws SQLException, IOException {
+        String sql = """
+            SELECT a.id, a.nome AS aluno, c.nome AS curso
+            FROM alunos a
+            JOIN cursos c ON a.curso_id = c.id
+            ORDER BY a.id ASC;
+        """;
+
+        System.out.println("\n--- AMOSTRA: TABELA DE ALUNOS COM NOMES FAKER (PRIMEIROS 50) ---");
+        System.out.printf("%-6s | %-35s | %-25s\n", "ID", "NOME DO ALUNO (FAKER)", "CURSO");
+        System.out.println("-----------------------------------------------------------------------");
+
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql);
+             BufferedWriter writer = new BufferedWriter(new FileWriter("relatorio_5000_alunos.txt"))) {
+
+            writer.write(String.format("%-6s | %-35s | %-25s\n", "ID", "NOME DO ALUNO (FAKER)", "CURSO"));
+            writer.write("-----------------------------------------------------------------------\n");
+
+            int contador = 0;
+            while (rs.next()) {
+                contador++;
+                int id = rs.getInt("id");
+                String nome = rs.getString("aluno");
+                String curso = rs.getString("curso");
+
+                //cada um dos 5.000 alunos no arquivo de texto
+                writer.write(String.format("%-6d | %-35s | %-25s\n", id, nome, curso));
+
+                // Exibe os primeiros 50 na tela
+                if (contador <= 50) {
+                    System.out.printf("%-6d | %-35s | %-25s\n", id, nome, curso);
+                }
+            }
+
+            System.out.println("-----------------------------------------------------------------------");
+            System.out.println("... e mais 4.950 alunos cadastrados no banco!");
+            System.out.println("-> Arquivo 'relatorio_5000_alunos.txt' gerado com a lista completa dos 5.000 alunos!");
+        }
     }
 }
