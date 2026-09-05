@@ -15,21 +15,37 @@ public class Main {
 
     private static final String URL = "jdbc:postgresql://localhost:5432/URI";
     private static final String USER = "postgres";
-    private static final String PASSWORD = "avatar"; // senha do pgAdmin
+    private static final String PASSWORD = "avatar"; // essa eh a nossa senha pq eh a do meu pgadmin kk
 
     public static void main(String[] args) {
+        System.out.println("Iniciando rotina do banco de dados...");
+
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
-            System.out.println("-> Conectado ao PostgreSQL com sucesso!");
+            System.out.println("-> Conectado ao ppostgreSQL!");
 
+            // limpar nossa tabela pra nao duplicar
+            limparBanco(conn);
 
+             //10curso
             List<Integer> cursosIds = cadastrarCursos(conn);
+
+            // geramos os 5k com o JAVAFAKER
             inserirAlunosComFaker(conn, cursosIds, 5000);
 
-
+            //exibe
             exibirRelatorio(conn);
 
         } catch (SQLException e) {
+            System.err.println("Erro durante a execucao: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    // Método que zera as tabelas para não duplicar dados ao rodar novamente
+    private static void limparBanco(Connection conn) throws SQLException {
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute("TRUNCATE TABLE alunos, cursos RESTART IDENTITY CASCADE;");
+            System.out.println("-> Banco limpo e IDs resetados para nova execucao.");
         }
     }
 
@@ -57,16 +73,14 @@ public class Main {
     }
 
     private static void inserirAlunosComFaker(Connection conn, List<Integer> cursosIds, int quantidade) throws SQLException {
-        // Inicializa o Framework Faker em Portugues do Brasil
         Faker faker = new Faker(new Locale("pt-BR"));
         Random random = new Random();
 
         String sql = "INSERT INTO alunos (nome, curso_id) VALUES (?, ?);";
-        conn.setAutoCommit(false); // Transacao em lote
+        conn.setAutoCommit(false);
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (int i = 1; i <= quantidade; i++) {
-                // Nome gerado realisticamente pelo framework
                 String nomeCompleto = faker.name().fullName();
                 int cursoSorteado = cursosIds.get(random.nextInt(cursosIds.size()));
 
@@ -98,7 +112,7 @@ public class Main {
             ORDER BY total_alunos DESC;
         """;
 
-        System.out.println("\n--- RELATORIO: ALUNOS POR CURSO ---");
+        System.out.println("\n--- RELATORIO:  ALUNOS POR CURSO ---");
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
