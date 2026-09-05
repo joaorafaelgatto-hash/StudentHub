@@ -15,7 +15,7 @@ public class Main {
 
     private static final String URL = "jdbc:postgresql://localhost:5432/URI";
     private static final String USER = "postgres";
-    private static final String PASSWORD = "avatar"; // senha do pgAdmin
+    private static final String PASSWORD = "     "; // senha do pgAdmin
 
     public static void main(String[] args) {
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
