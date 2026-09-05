@@ -18,7 +18,7 @@ public class Main {
 
     private static final String URL = "jdbc:postgresql://localhost:5432/URI";
     private static final String USER = "postgres";
-    private static final String PASSWORD = "avatar"; // essa eh a nossa senha pq eh a do meu pgadmin kk
+    private static final String PASSWORD = "     "; // senha do pgAdmin
 
     public static void main(String[] args) {
         System.out.println("Iniciando rotina do banco de dados...");
