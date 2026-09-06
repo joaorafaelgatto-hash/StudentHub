@@ -1,8 +1,5 @@
 import com.github.javafaker.Faker;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -21,37 +18,18 @@ public class Main {
     private static final String PASSWORD = "     "; // senha do pgAdmin
 
     public static void main(String[] args) {
-        System.out.println("Iniciando rotina do banco de dados...");
-
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
-            System.out.println("-> Conectado ao ppostgreSQL!");
+            System.out.println("-> Conectado ao PostgreSQL com sucesso!");
 
-            // limpar nossa tabela pra nao duplicar
-            limparBanco(conn);
 
-            // 10curso
             List<Integer> cursosIds = cadastrarCursos(conn);
-
-            // geramos os 5k com o JAVAFAKER
             inserirAlunosComFaker(conn, cursosIds, 5000);
 
-            // exibe resumo por curso
+
             exibirRelatorio(conn);
 
-            // exibe amostra no terminal e salva todos os 5k em arquivo
-            listarAlunosDetalhados(conn);
-
-        } catch (SQLException | IOException e) {
-            System.err.println("Erro durante a execucao: " + e.getMessage());
+        } catch (SQLException e) {
             e.printStackTrace();
-        }
-    }
-
-    // Método que zera as tabelas para não duplicar dados ao rodar novamente
-    private static void limparBanco(Connection conn) throws SQLException {
-        try (Statement stmt = conn.createStatement()) {
-            stmt.execute("TRUNCATE TABLE alunos, cursos RESTART IDENTITY CASCADE;");
-            System.out.println("-> Banco limpo e IDs resetados para nova execucao.");
         }
     }
 
@@ -79,11 +57,12 @@ public class Main {
     }
 
     private static void inserirAlunosComFaker(Connection conn, List<Integer> cursosIds, int quantidade) throws SQLException {
+        //da play no framework
         Faker faker = new Faker(new Locale("pt-BR"));
         Random random = new Random();
 
         String sql = "INSERT INTO alunos (nome, curso_id) VALUES (?, ?);";
-        conn.setAutoCommit(false);
+        conn.setAutoCommit(false); // Transacao em lote
 
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
             for (int i = 1; i <= quantidade; i++) {
@@ -118,7 +97,7 @@ public class Main {
             ORDER BY total_alunos DESC;
         """;
 
-        System.out.println("\n--- RELATORIO:  ALUNOS POR CURSO ---");
+        System.out.println("\n--- RELATORIO: ALUNOS POR CURSO ---");
         try (Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
@@ -126,47 +105,5 @@ public class Main {
             }
         }
         System.out.println("-----------------------------------");
-    }
-
-    // Tabela com os primeiros 50 nomes fakes e exportacao dos 5.000 para arquivo
-    private static void listarAlunosDetalhados(Connection conn) throws SQLException, IOException {
-        String sql = """
-            SELECT a.id, a.nome AS aluno, c.nome AS curso
-            FROM alunos a
-            JOIN cursos c ON a.curso_id = c.id
-            ORDER BY a.id ASC;
-        """;
-
-        System.out.println("\n--- AMOSTRA: TABELA DE ALUNOS COM NOMES FAKER (PRIMEIROS 50) ---");
-        System.out.printf("%-6s | %-35s | %-25s\n", "ID", "NOME DO ALUNO (FAKER)", "CURSO");
-        System.out.println("-----------------------------------------------------------------------");
-
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(sql);
-             BufferedWriter writer = new BufferedWriter(new FileWriter("relatorio_5000_alunos.txt"))) {
-
-            writer.write(String.format("%-6s | %-35s | %-25s\n", "ID", "NOME DO ALUNO (FAKER)", "CURSO"));
-            writer.write("-----------------------------------------------------------------------\n");
-
-            int contador = 0;
-            while (rs.next()) {
-                contador++;
-                int id = rs.getInt("id");
-                String nome = rs.getString("aluno");
-                String curso = rs.getString("curso");
-
-                //cada um dos 5.000 alunos no arquivo de texto
-                writer.write(String.format("%-6d | %-35s | %-25s\n", id, nome, curso));
-
-                // Exibe os primeiros 50 na tela
-                if (contador <= 50) {
-                    System.out.printf("%-6d | %-35s | %-25s\n", id, nome, curso);
-                }
-            }
-
-            System.out.println("-----------------------------------------------------------------------");
-            System.out.println("... e mais 4.950 alunos cadastrados no banco!");
-            System.out.println("-> Arquivo 'relatorio_5000_alunos.txt' gerado com a lista completa dos 5.000 alunos!");
-        }
     }
 }
