@@ -1,3 +1,22 @@
+
+// FLUXO GIT PARA NÃO NOS PERDERMOS
+//ANTES de começar a programar qualquer coisa, SEMPRE abra o Git Bash e rode:
+//    git pull origin main
+//    (Isso atualiza o nsso projeto local com tudo o que ja foi mexido)
+//
+// 2- Faça suas alterações necessárias e teste a execução no IntelliJ.
+//
+// 3 -para enviar suas atualizações para o GitHub, execute no git bash
+//    git add .
+//    git commit -m "tipo: descreva aqui"
+//    git pull --rebase origin main
+//    git push origin main
+//
+//O 'git pull --rebase origin main' antes do push garante que, caso alguém tenha
+//   enviado código enquanto você digitava, as mudanças se juntem sem apagar o trabalho de ngm
+
+
+
 import com.github.javafaker.Faker;
 
 import java.io.BufferedWriter;
