@@ -25,4 +25,32 @@ try (Connection conn = ConexaoBanco.getConnection()) {
 }
 return cursosCadastrados;
     }
+    public static void exibirRelatorio(Connection conn) throws SQLException {
+        String sql = """
+            SELECT c.nome AS curso, COUNT(a.id) AS total_alunos
+            FROM cursos c
+            LEFT JOIN alunos a ON c.id = a.curso_id
+            GROUP BY c.nome
+            ORDER BY total_alunos DESC;
+        """;
+
+        System.out.println("\n--- RELATORIO: ALUNOS POR CURSO ---");
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                System.out.printf("%-30s | %d alunos\n", rs.getString("curso"), rs.getInt("total_alunos"));
+            }
+        }
+        System.out.println("-----------------------------------");
+    }
+    public void limparTabelas() throws SQLException {
+        String sql = "TRUNCATE TABLE alunos, cursos RESTART IDENTITY CASCADE;";
+
+        try (Connection conn = ConexaoBanco.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.executeUpdate();
+            System.out.println("-> Tabelas 'alunos' e 'cursos' limpadas com sucesso!");
+        }
+    }
 }
